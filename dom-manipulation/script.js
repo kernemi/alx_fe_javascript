@@ -86,13 +86,14 @@ function addQuote() {
   quotes.push(newQuote);
   saveQuotes();
   populateCategories();
-  postQuoteToServer(newQuote); // ✅ Send to server
-  alert("Quote added and synced to server!");
+  postQuoteToServer(newQuote);
+  showSyncNotice("Quote added and synced to server!", "success");
+
   document.getElementById("newQuoteText").value = "";
   document.getElementById("newQuoteCategory").value = "";
 }
 
-// ✅ Post new quote to mock server (simulated)
+// ✅ Post new quote to mock server
 async function postQuoteToServer(quote) {
   try {
     await fetch(SERVER_URL, {
@@ -115,7 +116,6 @@ async function fetchQuotesFromServer() {
     const res = await fetch(SERVER_URL);
     const data = await res.json();
 
-    // Simulate extracting quote objects
     return data.slice(0, 5).map(post => ({
       text: post.title,
       category: "ServerSync"
@@ -126,7 +126,7 @@ async function fetchQuotesFromServer() {
   }
 }
 
-// ✅ Sync quotes (with conflict resolution)
+// ✅ Sync quotes with conflict resolution
 async function syncQuotes() {
   const serverQuotes = await fetchQuotesFromServer();
   const localJSON = JSON.stringify(quotes);
@@ -138,28 +138,44 @@ async function syncQuotes() {
       quotes = serverQuotes;
       saveQuotes();
       populateCategories();
-      showSyncNotice("Local quotes replaced with server data.");
+      showSyncNotice("Local quotes replaced with server data.", "success");
     } else {
-      showSyncNotice("Conflict detected: kept local quotes.");
+      showSyncNotice("Conflict detected: kept local quotes.", "conflict");
     }
   }
 }
 
-// ✅ Show sync notification
-function showSyncNotice(message) {
+// ✅ Show UI sync notifications
+function showSyncNotice(message, type = "info") {
   syncNotice.style.display = "block";
   syncNotice.textContent = message;
+
+  // Style by type
+  if (type === "success") {
+    syncNotice.style.background = "#d4edda";
+    syncNotice.style.color = "#155724";
+    syncNotice.style.border = "1px solid #c3e6cb";
+  } else if (type === "conflict") {
+    syncNotice.style.background = "#fff3cd";
+    syncNotice.style.color = "#856404";
+    syncNotice.style.border = "1px solid #ffeeba";
+  } else {
+    syncNotice.style.background = "#d1ecf1";
+    syncNotice.style.color = "#0c5460";
+    syncNotice.style.border = "1px solid #bee5eb";
+  }
+
   setTimeout(() => {
     syncNotice.style.display = "none";
-  }, 5000);
+  }, 7000);
 }
 
-// ✅ Manual sync trigger
+// Manual sync
 function manualSync() {
   syncQuotes();
 }
 
-// ✅ Export quotes
+// Export quotes to JSON
 function exportToJson() {
   const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -170,7 +186,7 @@ function exportToJson() {
   URL.revokeObjectURL(url);
 }
 
-// ✅ Import quotes
+// Import from JSON
 function importFromJsonFile(event) {
   const reader = new FileReader();
   reader.onload = function(e) {
@@ -180,7 +196,7 @@ function importFromJsonFile(event) {
         quotes.push(...imported);
         saveQuotes();
         populateCategories();
-        alert("Quotes imported!");
+        showSyncNotice("Quotes imported successfully!", "success");
       } else {
         throw new Error("Invalid JSON format");
       }
