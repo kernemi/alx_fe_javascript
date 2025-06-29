@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dynamic Quote Generator</title>
 </head>
 <body>
@@ -15,6 +15,10 @@
   <button id="newQuote">Show New Quote</button>
 
   <div id="formContainer"></div>
+
+  <h2>Import/Export Quotes</h2>
+  <button onclick="exportToJson()">Export to JSON</button>
+  <input type="file" id="importFile" accept=".json" onchange="importFromJsonFile(event)" />
 
   <script src="script.js"></script>
 </body>
