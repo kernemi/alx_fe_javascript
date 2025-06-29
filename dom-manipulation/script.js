@@ -1,8 +1,7 @@
-// Array of quote objects
-let quotes = [
+// Load from localStorage or use default
+let quotes = JSON.parse(localStorage.getItem("quotes")) || [
   { text: "The best way to get started is to quit talking and begin doing.", category: "Motivation" },
   { text: "Life is what happens when you're busy making other plans.", category: "Life" },
-  { text: "Get busy living or get busy dying.", category: "Life" },
   { text: "Success is not final, failure is not fatal: It is the courage to continue that counts.", category: "Motivation" },
 ];
 
@@ -11,7 +10,12 @@ const categorySelect = document.getElementById("categorySelect");
 const newQuoteBtn = document.getElementById("newQuote");
 const formContainer = document.getElementById("formContainer");
 
-// Populate category select options
+// Save to local storage
+function saveQuotes() {
+  localStorage.setItem("quotes", JSON.stringify(quotes));
+}
+
+// Populate category dropdown
 function updateCategoryOptions() {
   const categories = [...new Set(quotes.map(q => q.category))];
   categorySelect.innerHTML = "";
@@ -23,7 +27,7 @@ function updateCategoryOptions() {
   });
 }
 
-// Show a random quote from selected category
+// Show a random quote from the selected category
 function showRandomQuote() {
   const selectedCategory = categorySelect.value;
   const filtered = quotes.filter(q => q.category === selectedCategory);
@@ -31,28 +35,30 @@ function showRandomQuote() {
     quoteDisplay.textContent = "No quotes found for this category.";
     return;
   }
+
   const randomIndex = Math.floor(Math.random() * filtered.length);
-  quoteDisplay.textContent = `"${filtered[randomIndex].text}"`;
+  const quote = filtered[randomIndex].text;
+  quoteDisplay.textContent = `"${quote}"`;
+
+  // Save to session storage
+  sessionStorage.setItem("lastViewedQuote", quote);
 }
 
-// ✅ Create the add quote form dynamically
+// Create form dynamically
 function createAddQuoteForm() {
   const form = document.createElement("div");
-
   form.innerHTML = `
     <h2>Add a New Quote</h2>
     <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
     <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
     <button id="addQuoteBtn">Add Quote</button>
   `;
-
   formContainer.appendChild(form);
 
-  // Add event listener for the add button
   document.getElementById("addQuoteBtn").addEventListener("click", addQuote);
 }
 
-// ✅ Add a new quote to the array and update DOM
+// Add quote logic
 function addQuote() {
   const text = document.getElementById("newQuoteText").value.trim();
   const category = document.getElementById("newQuoteCategory").value.trim();
@@ -63,6 +69,7 @@ function addQuote() {
   }
 
   quotes.push({ text, category });
+  saveQuotes();
   updateCategoryOptions();
   alert("Quote added successfully!");
 
@@ -70,9 +77,51 @@ function addQuote() {
   document.getElementById("newQuoteCategory").value = "";
 }
 
-// ✅ Event listener for “Show New Quote” button
+// Export quotes to JSON
+function exportToJson() {
+  const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = "quotes.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Import quotes from JSON
+function importFromJsonFile(event) {
+  const fileReader = new FileReader();
+  fileReader.onload = function(e) {
+    try {
+      const importedQuotes = JSON.parse(e.target.result);
+      if (Array.isArray(importedQuotes)) {
+        quotes.push(...importedQuotes);
+        saveQuotes();
+        updateCategoryOptions();
+        alert('Quotes imported successfully!');
+      } else {
+        throw new Error("Invalid format");
+      }
+    } catch (err) {
+      alert("Error importing JSON: " + err.message);
+    }
+  };
+  fileReader.readAsText(event.target.files[0]);
+}
+
+// Load last viewed quote from session
+function loadLastViewedQuote() {
+  const lastQuote = sessionStorage.getItem("lastViewedQuote");
+  if (lastQuote) {
+    quoteDisplay.textContent = `"${lastQuote}"`;
+  }
+}
+
+// Event listeners
 newQuoteBtn.addEventListener("click", showRandomQuote);
 
 // Initialize
 updateCategoryOptions();
 createAddQuoteForm();
+loadLastViewedQuote();
